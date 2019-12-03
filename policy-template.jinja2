@@ -1,0 +1,13 @@
+[policy]
+edit {{ POLICY_NUMBER }}
+    set name "{{ POLICY_NAME }}"
+    set srcintf "{{ SRC_INTERFACE }}"
+    set dstintf "{{ DST_INTERFACE }}"
+    set srcaddr "{{ SRC_ADDRESS }}"
+    set dstaddr "{{ DST_ADDRESS }}"
+    set action accept
+    set schedule "always"
+    set service "{{ SERVICE_NAME }}"
+    set logtraffic all
+    set fsso disable
+next
