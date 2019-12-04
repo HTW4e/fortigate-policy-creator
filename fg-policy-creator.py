@@ -17,8 +17,28 @@
 # import global modules
 import os
 
-# variables
-this_dir = os.path.dirname(os.path.abspath(__file__))
+# function to create rule from jinja2 template
+def create_fg_policyrules(POLICY_NAME, SRC_INTERFACE, DST_INTERFACE, SRC_ADDRESS, DST_ADDRESS, SERVICE_NAME):
+    # import modules for this function
+    from jinja2 import Environment, FileSystemLoader
+
+    # variables
+    policy_template_file = 'policy-template.jinja2'
+
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+
+    j2_env = Environment(loader=FileSystemLoader(this_dir), trim_blocks=True)
+    rule = j2_env.get_template(policy_template_file).render(
+        POLICY_NUMBER = '100',
+        POLICY_NAME = POLICY_NAME,
+        SRC_INTERFACE = SRC_INTERFACE,
+        DST_INTERFACE = DST_INTERFACE,
+        SRC_ADDRESS = SRC_ADDRESS,
+        DST_ADDRESS = DST_ADDRESS,
+        SERVICE_NAME = SERVICE_NAME
+    )
+
+    print(rule)
 
 # function to read csv file
 def read_csv_file():
@@ -32,33 +52,20 @@ def read_csv_file():
         reader = csv.reader(f, delimiter=',')
         header = next(reader)
         for row in reader:
-            print(dict(zip(header,row)))
+            values = dict(zip(header,row))
 
-# function to create rule from jinja2 template
-def create_fg_policyrules():
-    # import modules for this function
-    from jinja2 import Environment, FileSystemLoader
+            POLICY_NAME = values.get('POLICY_NAME')
+            SRC_INTERFACE = values.get('SRC_INTERFACE')
+            DST_INTERFACE = values.get('DST_INTERFACE')
+            SRC_ADDRESS = values.get('SRC_ADDRESS')
+            DST_ADDRESS = values.get('DST_ADDRESS')
+            SERVICE_NAME = values.get('SERVICE_NAME')
 
-    # variables
-    policy_template_file = 'policy-template.jinja2'
-
-    j2_env = Environment(loader=FileSystemLoader(this_dir), trim_blocks=True)
-    rule = j2_env.get_template(policy_template_file).render(
-        POLICY_NUMBER = '100',
-        POLICY_NAME = 'Test Policy',
-        SRC_INTERFACE = 'LAN',
-        DST_INTERFACE = 'WAN',
-        SRC_ADDRESS = '10.10.10.10',
-        DST_ADDRESS = '8.8.8.8',
-        SERVICE_NAME = 'HTTP'
-    )
-
-    print(rule)
+            create_fg_policyrules(POLICY_NAME, SRC_INTERFACE, DST_INTERFACE, SRC_ADDRESS, DST_ADDRESS, SERVICE_NAME)
 
 # main function
 def main():
     read_csv_file()
-    #create_fg_policyrules()
 
 # main program
 if __name__ == '__main__':
