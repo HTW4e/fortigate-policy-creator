@@ -15,15 +15,51 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # import global mondule
+import os
+import csv
 import configparser
 
-# function to create rule from jinja2 template
-def create_fg_policyrules(config, POLICY_NUMBER, POLICY_NAME, SRC_INTERFACE, DST_INTERFACE, SRC_ADDRESS, DST_ADDRESS, SERVICE_NAME):
+# global variables
+filename = "fg-ruleset.txt"
+total_rows = 0
+
+# function to create blank ruleset file
+def create_ruleset_file():
     # import modules for this function
-    import os
+    import datetime
+
+    # define some variables as global
+    global filename
+
+    now = datetime.datetime.now()
+    time_now = now.strftime("%Y%m%d-%H%M")
+    filename = "fg-ruleset_" + time_now + ".txt"
+
+    # create file only if not exist
+    if not os.path.isfile(filename):
+        os.mknod(filename)
+
+# function to count rows in csv file
+def count_rows_in_csv(config):
+
+    csv_rule_file = config.get('Policy', 'rules-file')
+
+    # define some variables as global
+    global total_rows
+
+    total_rows = 0
+    with open(csv_rule_file, 'r') as f:
+        for line in f:
+            total_rows += 1
+
+    # remove header row
+    total_rows -= 1
+
+# function to create rule from jinja2 template
+def create_fg_policyrules(config, POLICY_NUMBER, POLICY_NAME, SRC_INTERFACE, DST_INTERFACE, SRC_ADDRESS, DST_ADDRESS, SERVICE_NAME, NEXT_ACTION):
+    # import modules for this function
     from jinja2 import Environment, FileSystemLoader
 
-    # variables
     policy_template_file = config.get('Policy', 'policy-template')
 
     this_dir = os.path.dirname(os.path.abspath(__file__))
@@ -36,17 +72,19 @@ def create_fg_policyrules(config, POLICY_NUMBER, POLICY_NAME, SRC_INTERFACE, DST
         DST_INTERFACE = DST_INTERFACE,
         SRC_ADDRESS = SRC_ADDRESS,
         DST_ADDRESS = DST_ADDRESS,
-        SERVICE_NAME = SERVICE_NAME
+        SERVICE_NAME = SERVICE_NAME,
+        NEXT_ACTION = NEXT_ACTION
     )
 
-    print(rule)
+    # write rule to file
+    f = open(filename, "a")
+    f.write(rule + '\n')
+    f.close()
 
-# function to read csv file
-def read_csv_file(config):
-    # import function
-    import csv
-
+# function to create rules from csv file
+def create_rules(config):
     # variables
+    count = 1
     csv_rule_file = config.get('Policy', 'rules-file')
     FIRST_POLICY_NUMBER = config.get('Policy', 'first_policy_number')
 
@@ -63,17 +101,24 @@ def read_csv_file(config):
             SRC_ADDRESS = values.get('SRC_ADDRESS')
             DST_ADDRESS = values.get('DST_ADDRESS')
             SERVICE_NAME = values.get('SERVICE_NAME')
+            if total_rows > count:
+                NEXT_ACTION = 'next'
+            else:
+                NEXT_ACTION = 'end'
 
-            create_fg_policyrules(config, POLICY_NUMBER, POLICY_NAME, SRC_INTERFACE, DST_INTERFACE, SRC_ADDRESS, DST_ADDRESS, SERVICE_NAME)
+            create_fg_policyrules(config, POLICY_NUMBER, POLICY_NAME, SRC_INTERFACE, DST_INTERFACE, SRC_ADDRESS, DST_ADDRESS, SERVICE_NAME, NEXT_ACTION)
 
             FIRST_POLICY_NUMBER = int(FIRST_POLICY_NUMBER) + 1
+            count += 1
 
 # main function
 def main():
     config = configparser.ConfigParser()
     config.read('settings.ini')
 
-    read_csv_file(config)
+    count_rows_in_csv(config)
+    create_ruleset_file()
+    create_rules(config)
 
 # main program
 if __name__ == '__main__':
