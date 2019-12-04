@@ -14,22 +14,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# import global modules
-import os
+# import global mondule
+import configparser
 
 # function to create rule from jinja2 template
-def create_fg_policyrules(POLICY_NAME, SRC_INTERFACE, DST_INTERFACE, SRC_ADDRESS, DST_ADDRESS, SERVICE_NAME):
+def create_fg_policyrules(config, POLICY_NUMBER, POLICY_NAME, SRC_INTERFACE, DST_INTERFACE, SRC_ADDRESS, DST_ADDRESS, SERVICE_NAME):
     # import modules for this function
+    import os
     from jinja2 import Environment, FileSystemLoader
 
     # variables
-    policy_template_file = 'policy-template.jinja2'
+    policy_template_file = config.get('Policy', 'policy-template')
 
     this_dir = os.path.dirname(os.path.abspath(__file__))
 
     j2_env = Environment(loader=FileSystemLoader(this_dir), trim_blocks=True)
     rule = j2_env.get_template(policy_template_file).render(
-        POLICY_NUMBER = '100',
+        POLICY_NUMBER = POLICY_NUMBER,
         POLICY_NAME = POLICY_NAME,
         SRC_INTERFACE = SRC_INTERFACE,
         DST_INTERFACE = DST_INTERFACE,
@@ -41,12 +42,13 @@ def create_fg_policyrules(POLICY_NAME, SRC_INTERFACE, DST_INTERFACE, SRC_ADDRESS
     print(rule)
 
 # function to read csv file
-def read_csv_file():
+def read_csv_file(config):
     # import function
     import csv
 
     # variables
-    csv_rule_file = 'rules.csv'
+    csv_rule_file = config.get('Policy', 'rules-file')
+    FIRST_POLICY_NUMBER = config.get('Policy', 'first_policy_number')
 
     with open(csv_rule_file) as f:
         reader = csv.reader(f, delimiter=',')
@@ -54,6 +56,7 @@ def read_csv_file():
         for row in reader:
             values = dict(zip(header,row))
 
+            POLICY_NUMBER = FIRST_POLICY_NUMBER
             POLICY_NAME = values.get('POLICY_NAME')
             SRC_INTERFACE = values.get('SRC_INTERFACE')
             DST_INTERFACE = values.get('DST_INTERFACE')
@@ -61,11 +64,16 @@ def read_csv_file():
             DST_ADDRESS = values.get('DST_ADDRESS')
             SERVICE_NAME = values.get('SERVICE_NAME')
 
-            create_fg_policyrules(POLICY_NAME, SRC_INTERFACE, DST_INTERFACE, SRC_ADDRESS, DST_ADDRESS, SERVICE_NAME)
+            create_fg_policyrules(config, POLICY_NUMBER, POLICY_NAME, SRC_INTERFACE, DST_INTERFACE, SRC_ADDRESS, DST_ADDRESS, SERVICE_NAME)
+
+            FIRST_POLICY_NUMBER = int(FIRST_POLICY_NUMBER) + 1
 
 # main function
 def main():
-    read_csv_file()
+    config = configparser.ConfigParser()
+    config.read('settings.ini')
+
+    read_csv_file(config)
 
 # main program
 if __name__ == '__main__':
