@@ -4,7 +4,7 @@ edit {{ POLICY_NUMBER }}
     set dstintf "{{ DST_INTERFACE }}"
     set srcaddr "{{ SRC_ADDRESS }}"
     set dstaddr "{{ DST_ADDRESS }}"
-    set action accept
+    set action {{ ACTION }}
     set schedule "always"
     set service "{{ SERVICE_NAME }}"
     set logtraffic all

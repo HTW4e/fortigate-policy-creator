@@ -59,7 +59,7 @@ def count_rows_in_csv(config):
     total_rows -= 1
 
 # function to create rule from jinja2 template
-def create_fg_policyrules(config, POLICY_NUMBER, POLICY_NAME, SRC_INTERFACE, DST_INTERFACE, SRC_ADDRESS, DST_ADDRESS, SERVICE_NAME, NEXT_ACTION):
+def create_fg_policyrules(config, POLICY_NUMBER, POLICY_NAME, SRC_INTERFACE, DST_INTERFACE, SRC_ADDRESS, DST_ADDRESS, ACTION, SERVICE_NAME, NEXT_ACTION):
     # import modules for this function
     from jinja2 import Environment, FileSystemLoader
 
@@ -77,6 +77,7 @@ def create_fg_policyrules(config, POLICY_NUMBER, POLICY_NAME, SRC_INTERFACE, DST
         DST_INTERFACE = DST_INTERFACE,
         SRC_ADDRESS = SRC_ADDRESS,
         DST_ADDRESS = DST_ADDRESS,
+        ACTION = ACTION,
         SERVICE_NAME = SERVICE_NAME,
         NEXT_ACTION = NEXT_ACTION
     )
@@ -112,6 +113,7 @@ def create_rules(config):
             DST_INTERFACE = values.get('DST_INTERFACE')
             SRC_ADDRESS = values.get('SRC_ADDRESS')
             DST_ADDRESS = values.get('DST_ADDRESS')
+            ACTION = values.get('ACTION')
             SERVICE_NAME = values.get('SERVICE_NAME')
             if total_rows > count:
                 NEXT_ACTION = 'next'
@@ -119,7 +121,7 @@ def create_rules(config):
                 NEXT_ACTION = 'end'
 
             # call function to create policies
-            create_fg_policyrules(config, POLICY_NUMBER, POLICY_NAME, SRC_INTERFACE, DST_INTERFACE, SRC_ADDRESS, DST_ADDRESS, SERVICE_NAME, NEXT_ACTION)
+            create_fg_policyrules(config, POLICY_NUMBER, POLICY_NAME, SRC_INTERFACE, DST_INTERFACE, SRC_ADDRESS, DST_ADDRESS, ACTION, SERVICE_NAME, NEXT_ACTION)
 
             FIRST_POLICY_NUMBER = int(FIRST_POLICY_NUMBER) + 1
             count += 1
