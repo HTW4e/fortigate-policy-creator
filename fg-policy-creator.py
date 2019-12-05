@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-'''
+"""
 Copyright (C) 2019  HTW4e <htw4e@htw4e.li>
 
 This program is free software: you can redistribute it and/or modify
@@ -14,7 +14,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
-'''
+"""
 
 # import global mondule
 import os
@@ -41,6 +41,7 @@ def create_ruleset_file():
     if not os.path.isfile(filename):
         os.mknod(filename)
 
+
 # function to count rows in csv file
 def count_rows_in_csv(config):
     # define some variables as global
@@ -48,44 +49,57 @@ def count_rows_in_csv(config):
 
     total_rows = 0
     # get csv rule file from ini
-    csv_rule_file = config.get('Policy', 'rules-file')
+    csv_rule_file = config.get("Policy", "rules-file")
 
     # count rows in csv file excl. header line
-    with open(csv_rule_file, 'r') as f:
+    with open(csv_rule_file, "r") as f:
         for line in f:
             total_rows += 1
 
     # remove header row
     total_rows -= 1
 
+
 # function to create rule from jinja2 template
-def create_fg_policyrules(config, POLICY_NUMBER, POLICY_NAME, SRC_INTERFACE, DST_INTERFACE, SRC_ADDRESS, DST_ADDRESS, ACTION, SERVICE_NAME, NEXT_ACTION):
+def create_fg_policyrules(
+    config,
+    POLICY_NUMBER,
+    POLICY_NAME,
+    SRC_INTERFACE,
+    DST_INTERFACE,
+    SRC_ADDRESS,
+    DST_ADDRESS,
+    ACTION,
+    SERVICE_NAME,
+    NEXT_ACTION,
+):
     # import modules for this function
     from jinja2 import Environment, FileSystemLoader
 
     # get policy template name from ini file
-    policy_template_file = config.get('Policy', 'policy-template')
+    policy_template_file = config.get("Policy", "policy-template")
 
     this_dir = os.path.dirname(os.path.abspath(__file__))
 
     j2_env = Environment(loader=FileSystemLoader(this_dir), trim_blocks=True)
     # modify jinja2 template with values from csv file
     rule = j2_env.get_template(policy_template_file).render(
-        POLICY_NUMBER = POLICY_NUMBER,
-        POLICY_NAME = POLICY_NAME,
-        SRC_INTERFACE = SRC_INTERFACE,
-        DST_INTERFACE = DST_INTERFACE,
-        SRC_ADDRESS = SRC_ADDRESS,
-        DST_ADDRESS = DST_ADDRESS,
-        ACTION = ACTION,
-        SERVICE_NAME = SERVICE_NAME,
-        NEXT_ACTION = NEXT_ACTION
+        POLICY_NUMBER=POLICY_NUMBER,
+        POLICY_NAME=POLICY_NAME,
+        SRC_INTERFACE=SRC_INTERFACE,
+        DST_INTERFACE=DST_INTERFACE,
+        SRC_ADDRESS=SRC_ADDRESS,
+        DST_ADDRESS=DST_ADDRESS,
+        ACTION=ACTION,
+        SERVICE_NAME=SERVICE_NAME,
+        NEXT_ACTION=NEXT_ACTION,
     )
 
     # write rule to file
-    f = open(filename, 'a')
-    f.write(rule + '\n')
+    f = open(filename, "a")
+    f.write(rule + "\n")
     f.close()
+
 
 # function to create rules from csv file
 def create_rules(config):
@@ -96,45 +110,58 @@ def create_rules(config):
     count = 1
 
     # get values from ini file
-    csv_rule_file = config.get('Policy', 'rules-file')
-    FIRST_POLICY_NUMBER = config.get('Policy', 'first_policy_number')
+    csv_rule_file = config.get("Policy", "rules-file")
+    FIRST_POLICY_NUMBER = config.get("Policy", "first_policy_number")
 
     # open csv file and read lines
     with open(csv_rule_file) as f:
-        reader = csv.reader(f, delimiter=',')
+        reader = csv.reader(f, delimiter=",")
         header = next(reader)
         for row in reader:
-            values = dict(zip(header,row))
+            values = dict(zip(header, row))
 
             # modify jinja2 template file with values from csv
             POLICY_NUMBER = FIRST_POLICY_NUMBER
-            POLICY_NAME = values.get('POLICY_NAME')
-            SRC_INTERFACE = values.get('SRC_INTERFACE')
-            DST_INTERFACE = values.get('DST_INTERFACE')
-            SRC_ADDRESS = values.get('SRC_ADDRESS')
-            DST_ADDRESS = values.get('DST_ADDRESS')
-            ACTION = values.get('ACTION')
-            SERVICE_NAME = values.get('SERVICE_NAME')
+            POLICY_NAME = values.get("POLICY_NAME")
+            SRC_INTERFACE = values.get("SRC_INTERFACE")
+            DST_INTERFACE = values.get("DST_INTERFACE")
+            SRC_ADDRESS = values.get("SRC_ADDRESS")
+            DST_ADDRESS = values.get("DST_ADDRESS")
+            ACTION = values.get("ACTION")
+            SERVICE_NAME = values.get("SERVICE_NAME")
             if total_rows > count:
-                NEXT_ACTION = 'next'
+                NEXT_ACTION = "next"
             else:
-                NEXT_ACTION = 'end'
+                NEXT_ACTION = "end"
 
             # call function to create policies
-            create_fg_policyrules(config, POLICY_NUMBER, POLICY_NAME, SRC_INTERFACE, DST_INTERFACE, SRC_ADDRESS, DST_ADDRESS, ACTION, SERVICE_NAME, NEXT_ACTION)
+            create_fg_policyrules(
+                config,
+                POLICY_NUMBER,
+                POLICY_NAME,
+                SRC_INTERFACE,
+                DST_INTERFACE,
+                SRC_ADDRESS,
+                DST_ADDRESS,
+                ACTION,
+                SERVICE_NAME,
+                NEXT_ACTION,
+            )
 
             FIRST_POLICY_NUMBER = int(FIRST_POLICY_NUMBER) + 1
             count += 1
 
+
 # main function
 def main():
     config = configparser.ConfigParser()
-    config.read('settings.ini')
+    config.read("settings.ini")
 
     count_rows_in_csv(config)
     create_ruleset_file()
     create_rules(config)
 
+
 # main program
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
