@@ -18,7 +18,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # import global mondule
 import os
-import csv
 import configparser
 
 # global variables
@@ -33,6 +32,7 @@ def create_ruleset_file():
     # define some variables as global
     global filename
 
+    # create time date example 20191205-0804
     now = datetime.datetime.now()
     time_now = now.strftime("%Y%m%d-%H%M")
     filename = "fg-ruleset_" + time_now + ".txt"
@@ -43,13 +43,14 @@ def create_ruleset_file():
 
 # function to count rows in csv file
 def count_rows_in_csv(config):
-
-    csv_rule_file = config.get('Policy', 'rules-file')
-
     # define some variables as global
     global total_rows
 
     total_rows = 0
+    # get csv rule file from ini
+    csv_rule_file = config.get('Policy', 'rules-file')
+
+    # count rows in csv file excl. header line
     with open(csv_rule_file, 'r') as f:
         for line in f:
             total_rows += 1
@@ -62,11 +63,13 @@ def create_fg_policyrules(config, POLICY_NUMBER, POLICY_NAME, SRC_INTERFACE, DST
     # import modules for this function
     from jinja2 import Environment, FileSystemLoader
 
+    # get policy template name from ini file
     policy_template_file = config.get('Policy', 'policy-template')
 
     this_dir = os.path.dirname(os.path.abspath(__file__))
 
     j2_env = Environment(loader=FileSystemLoader(this_dir), trim_blocks=True)
+    # modify jinja2 template with values from csv file
     rule = j2_env.get_template(policy_template_file).render(
         POLICY_NUMBER = POLICY_NUMBER,
         POLICY_NAME = POLICY_NAME,
@@ -85,17 +88,24 @@ def create_fg_policyrules(config, POLICY_NUMBER, POLICY_NAME, SRC_INTERFACE, DST
 
 # function to create rules from csv file
 def create_rules(config):
+    # import modules for this function
+    import csv
+
     # variables
     count = 1
+
+    # get values from ini file
     csv_rule_file = config.get('Policy', 'rules-file')
     FIRST_POLICY_NUMBER = config.get('Policy', 'first_policy_number')
 
+    # open csv file and read lines
     with open(csv_rule_file) as f:
         reader = csv.reader(f, delimiter=',')
         header = next(reader)
         for row in reader:
             values = dict(zip(header,row))
 
+            # modify jinja2 template file with values from csv
             POLICY_NUMBER = FIRST_POLICY_NUMBER
             POLICY_NAME = values.get('POLICY_NAME')
             SRC_INTERFACE = values.get('SRC_INTERFACE')
@@ -108,6 +118,7 @@ def create_rules(config):
             else:
                 NEXT_ACTION = 'end'
 
+            # call function to create policies
             create_fg_policyrules(config, POLICY_NUMBER, POLICY_NAME, SRC_INTERFACE, DST_INTERFACE, SRC_ADDRESS, DST_ADDRESS, SERVICE_NAME, NEXT_ACTION)
 
             FIRST_POLICY_NUMBER = int(FIRST_POLICY_NUMBER) + 1
