@@ -63,7 +63,6 @@ def count_rows_in_csv(config):
 # function to create rule from jinja2 template
 def create_fg_policyrules(
     config,
-    POLICY_NUMBER,
     POLICY_NAME,
     SRC_INTERFACE,
     DST_INTERFACE,
@@ -84,7 +83,6 @@ def create_fg_policyrules(
     j2_env = Environment(loader=FileSystemLoader(this_dir), trim_blocks=True)
     # modify jinja2 template with values from csv file
     rule = j2_env.get_template(policy_template_file).render(
-        POLICY_NUMBER=POLICY_NUMBER,
         POLICY_NAME=POLICY_NAME,
         SRC_INTERFACE=SRC_INTERFACE,
         DST_INTERFACE=DST_INTERFACE,
@@ -111,7 +109,6 @@ def create_rules(config):
 
     # get values from ini file
     csv_rule_file = config.get("Policy", "rules-file")
-    FIRST_POLICY_NUMBER = config.get("Policy", "first_policy_number")
 
     # open csv file and read lines
     with open(csv_rule_file) as f:
@@ -121,7 +118,6 @@ def create_rules(config):
             values = dict(zip(header, row))
 
             # modify jinja2 template file with values from csv
-            POLICY_NUMBER = FIRST_POLICY_NUMBER
             POLICY_NAME = values.get("POLICY_NAME")
             SRC_INTERFACE = values.get("SRC_INTERFACE")
             DST_INTERFACE = values.get("DST_INTERFACE")
@@ -137,7 +133,6 @@ def create_rules(config):
             # call function to create policies
             create_fg_policyrules(
                 config,
-                POLICY_NUMBER,
                 POLICY_NAME,
                 SRC_INTERFACE,
                 DST_INTERFACE,
@@ -147,9 +142,6 @@ def create_rules(config):
                 SERVICE_NAME,
                 NEXT_ACTION,
             )
-
-            FIRST_POLICY_NUMBER = int(FIRST_POLICY_NUMBER) + 1
-            count += 1
 
 
 # main function
