@@ -130,6 +130,8 @@ def create_rules(config):
             else:
                 NEXT_ACTION = "end"
 
+            count += 1
+
             # call function to create policies
             create_fg_policyrules(
                 config,
